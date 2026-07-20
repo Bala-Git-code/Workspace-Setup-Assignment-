@@ -93,4 +93,60 @@ We maintain full transparency and task traceability using GitHub Issues.
 
 ---
 
+## 5. Production Python Data Workflow Script Execution
+
+Our production data pipeline is implemented as a modular script in `scripts/data_workflow.py`. This replaces interactive notebook exploration with reproducible, command-line executable code suitable for automated scheduling and CI/CD pipelines.
+
+### How to Execute the Script
+Execute the script from the project root directory using Python:
+```bash
+python scripts/data_workflow.py
+```
+Alternatively, navigate to the `scripts/` directory and execute:
+```bash
+cd scripts
+python data_workflow.py
+```
+
+To capture execution confirmation metrics into an audit file:
+```bash
+python scripts/data_workflow.py > output/sample_run.txt
+```
+
+### Function Breakdown & Separated Concerns
+
+1. **Ingestion Stage (`ingest_data`)**:
+   - **Purpose**: Reads raw datasets from CSV or JSON files into a Pandas DataFrame.
+   - **Path Resolution**: Handles relative paths seamlessly whether executed from root or subdirectories.
+   - **Input**: Filepath string (`filepath`).
+   - **Returns**: Loaded Pandas `DataFrame`.
+
+2. **Transformation Stage (`process_data`)**:
+   - **Purpose**: Cleans, standardizes, and enriches raw records into analysis-ready format.
+   - **Transformations**:
+     - Deduplicates records (`drop_duplicates()`).
+     - Imputes missing numerical values using column median metrics.
+     - Standardizes text and categorical string columns.
+     - Computes derived business metrics (e.g., tax-adjusted transaction amounts).
+   - **Input**: Raw Pandas `DataFrame`.
+   - **Returns**: Cleaned, transformed Pandas `DataFrame`.
+
+3. **Output & Reporting Stage (`output_results`)**:
+   - **Purpose**: Saves processed results to disk and outputs confirmation metrics.
+   - **Directory Management**: Creates target output directories automatically if missing.
+   - **Input**: Processed `DataFrame` and target `output_path`.
+   - **Outputs**: Writes CSV to disk and prints formatted success status:
+     ```text
+     ✓ Data successfully processed
+     ✓ Rows processed: <count>
+     ✓ Output saved to <output_path>
+     ```
+
+### How to Adapt the Workflow for New Datasets
+- **New Data Sources**: Update the input file path in the `if __name__ == "__main__":` block or pass custom arguments to `ingest_data(new_filepath)`.
+- **Custom Business Logic**: Modify `process_data(df)` to add domain-specific filtering, custom column calculations, or aggregation rules.
+- **Alternative Export Formats**: Extend `output_results(df, output_path)` to export to Parquet, SQL databases, or cloud storage endpoints as pipeline requirements evolve.
+
+---
+
 *Documented for team collaboration and workflow consistency.*
